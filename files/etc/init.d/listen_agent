@@ -1,0 +1,24 @@
+#!/bin/ash -f
+#Listen Agent
+#Listens for incoming connections and executes based on info received.
+
+lstn_port=`grep listen /etc/config/gpio_wifi | awk -F ":" '{print $2}'`
+worker=`grep worker /etc/config/gpio_wifi | awk -F ":" '{print $2}'`
+logfile="/tmp/gpio.log"
+touch $logfile
+$worker hash
+recv_data="none"
+
+while true; do
+recv_data=`cat /tmp/salt|nc -l -p $lstn_port`
+#echo $recv_data
+
+if [ "$recv_data" != "" ]; then
+#echo "got someting"
+#echo $recv_data
+echo $recv_data > /tmp/lastcmd
+$worker $recv_data
+$worker hash
+fi
+
+done

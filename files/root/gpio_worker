@@ -1,0 +1,37 @@
+#!/bin/ash
+#This worker does all the heavy lifting for strings received by the listen_agent
+#Jason Harnish - 6/22/2014
+
+curr_dir=`pwd`
+date=`date +'%y-%m-%d'`
+password=`grep password /etc/config/gpio_wifi | awk -F ":" '{print $2}'`
+logfile="/tmp/gpio.log"
+
+
+hash() {
+        key=`date +'%m%d%H%M'`
+        salt=`pwcrypt $key`
+        echo $salt > /tmp/salt
+        pwcrypt -s `cat /tmp/salt` $password > /tmp/hashpass
+}
+
+setpin() {
+        recv_data=`cat /tmp/lastcmd|sed -e 's/,/ /g'`
+
+        if [ "`cat /tmp/hashpass`" == "`echo $recv_data | awk -F " " '{print $NF}'`" ]; then
+                for item in $recv_data; do
+                        #printf $item"\n"
+                        if [ "`echo $item|cut -c 1-4`" == "gpio" ]; then
+                                echo "Setting pin "`echo $item|cut -c 5`" to "`echo $item|cut -c 7` >> $logfile
+                                echo `echo $item|cut -c 7` > /sys/class/gpio/gpio`echo $item|cut -c 5`/value
+                        fi
+                done
+        else
+                echo "Passwords did not match" >> $logfile
+        fi
+
+}
+
+command=`echo $1 | awk -F "," '{print $1}'`
+#echo $command >> $logfile
+$command

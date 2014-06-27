@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+
+START=01
+
+STOP=01
+
+start() {
+        pins=`grep gpios /etc/config/gpio_wifi | awk -F ":" '{print $2}' | sed -e 's/,/ /g'`
+        for pin in $pins; do
+        #echo $pin
+                echo `echo $pin | cut -c 1` > /sys/class/gpio/export
+                direction=`echo $pin | cut -c 2`
+                        if [ "$direction" == "o" ]; then
+                        echo "out" > /sys/class/gpio/gpio`echo $pin | cut -c 1`/direction
+                        else
+                        echo "in" > /sys/class/gpio/gpio`echo $pin | cut -c 1`/direction
+                        echo 0 > /sys/class/gpio/gpio`echo $pin | cut -c 1`/value
+                        fi
+        done
+}

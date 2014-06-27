@@ -1,0 +1,24 @@
+#!/bin/ash
+#Broadcast Agent
+#Broadcasts System Info and GPIO status
+
+interval=`grep interval /etc/config/gpio_wifi | awk -F ":" '{print $2}'`
+lstn_port=`grep listen /etc/config/gpio_wifi | awk -F ":" '{print $2}'`
+server=`grep server /etc/config/gpio_wifi | awk -F ":" '{print $2}'`
+
+while true; do
+IP=`ifconfig wlan0 2>/dev/null|awk '/inet addr:/ {print $2}'|sed 's/addr://'`
+hostname=`uname -n`
+message="$IP,$lstn_port,$hostname,"
+for pin in `ls /sys/class/gpio | grep gpio | grep -v chip`;do
+message=$message"$pin:`cat /sys/class/gpio/$pin/value`":`cat /sys/class/gpio/$pin/direction`,
+done
+
+#printf $message"\n"
+printf $message`date +'%y%m%d%H%M%S'`"\n" | socat - UDP4-DATAGRAM:255.255.255.255:6969,so-broadcast
+
+message=""
+ping -c 1 $server > /dev/null
+
+sleep $interval
+done

@@ -1,0 +1,14 @@
+config system
+        option hostname 'modtest'
+        option timezone 'EST5EDT'
+
+config timeserver 'ntp'
+        list server 'time.nist.gov'
+        option enable_server '0'
+
+config led 'led_wifi_led'
+        option name 'wifi'
+        option sysfs 'rt2800pci-phy0::radio'
+        option trigger 'netdev'
+        option dev 'wlan0'
+        option mode 'link tx rx'
